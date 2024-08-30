@@ -1,6 +1,6 @@
 resource "aws_security_group" "step-ca" {
   vpc_id = var.vpc_id
-  name = "step-ca"
+  name   = "step-ca"
 }
 
 resource "aws_vpc_security_group_ingress_rule" "allow_tls_ipv4" {
