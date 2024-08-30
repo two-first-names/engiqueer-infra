@@ -5,3 +5,4 @@
       architecture: arm64
     - role: step-ca
       architecture: arm64
+    - dns/cloudflare

@@ -23,3 +23,12 @@
     remote_src: yes
     dest: "/usr/bin/step"
     mode: a+x
+
+- name: Bootstrap step
+  command: step ca bootstrap --ca-url https://{{ step_ca_host }} --fingerprint {{ step_ca_fingerprint }} --force
+  args:
+    creates: /root/.step/config/defaults.json
+  register: bootstrap
+
+- name: Install root CA certificate
+  shell: step certificate install $(step path)/certs/root_ca.crt

@@ -1,0 +1,97 @@
+---
+- name: Install required packages
+  ansible.builtin.apt:
+    name:
+      - libguestfs-tools
+      - python3-proxmoxer
+
+- name: Create VM
+  community.general.proxmox_kvm:
+    api_host: '{{ ansible_host }}'
+    api_user: automation@pve
+    api_token_id: automation
+    api_token_secret: "{{ lookup('ansible.builtin.env', 'PROXMOX_TOKEN_SECRET') }}"
+    name: '{{ hostname }}'
+    node: '{{ inventory_hostname }}'
+    # timeout: 600
+    cpu: host
+    cores: 2
+    vcpus: 1
+    memory: 2048
+    net: net0='virtio,bridge=vlan{{vlan}}'
+    ipconfig: ipconfig0='ip=dhcp,ip6=auto'
+    ide: ide2='local-zfs:cloudinit'
+    scsihw: virtio-scsi-pci
+    agent: true
+    serial: serial0='socket'
+    vga: serial0
+    cipassword: "{{ lookup('ansible.builtin.password', '/dev/null', chars=['ascii_lowercase', 'digits'], length=8) }}"
+  register: vm
+
+- name: Bootstrap VM
+  when: vm.changed
+  block:
+    - name: Generate step single use token
+      delegate_to: localhost
+      shell: |
+        step ca token --ssh --host {{ hostname }}
+      register: token
+
+    - name: Generate SSH keypairs
+      community.crypto.openssh_keypair:
+        path: "/tmp/ssh_host_ed25519_key-{{hostname}}"
+        type: "ed25519"
+
+    - name: Generate SSH host certificates
+      shell:
+        step ssh certificate --token {{token.stdout}} --host --insecure --no-password --force {{hostname}} /tmp/ssh_host_ed25519_key-{{hostname}}
+
+    - name: Get SSH user root publickey
+      shell:
+        step ssh config --roots > /tmp/ssh_user_key.pub
+
+    - name: Download Debian 12 Cloud Image
+      get_url:
+        url: "https://cloud.debian.org/images/cloud/bookworm/latest/debian-12-generic-amd64.qcow2"
+        dest: "/tmp/debian-12-generic-amd64-{{ hostname }}.qcow2"
+        mode: '0755'
+        timeout: 30
+
+    - name: Copy sshd_config
+      copy:
+        src: sshd_config
+        dest: /tmp/sshd_config
+
+    - name: Copy cloud.cfg
+      copy:
+        src: cloud.cfg
+        dest: /tmp/cloud.cfg
+
+    - name: Customize image
+      shell: |
+        virt-customize -a /tmp/debian-12-generic-amd64-{{ hostname }}.qcow2 --update
+        virt-customize -a /tmp/debian-12-generic-amd64-{{ hostname }}.qcow2 --install qemu-guest-agent
+        virt-customize -a /tmp/debian-12-generic-amd64-{{ hostname }}.qcow2 --upload /tmp/sshd_config:/etc/ssh/sshd_config
+        virt-customize -a /tmp/debian-12-generic-amd64-{{ hostname }}.qcow2 --upload /tmp/ssh_host_ed25519_key-{{hostname}}:/etc/ssh/ssh_host_ed25519_key
+        virt-customize -a /tmp/debian-12-generic-amd64-{{ hostname }}.qcow2 --upload /tmp/ssh_host_ed25519_key-{{hostname}}.pub:/etc/ssh/ssh_host_ed25519_key.pub
+        virt-customize -a /tmp/debian-12-generic-amd64-{{ hostname }}.qcow2 --upload /tmp/ssh_host_ed25519_key-{{hostname}}-cert.pub:/etc/ssh/ssh_host_ed25519_key-cert.pub
+        virt-customize -a /tmp/debian-12-generic-amd64-{{ hostname }}.qcow2 --upload /tmp/ssh_user_key.pub:/etc/ssh/ssh_user_key.pub
+        virt-customize -a /tmp/debian-12-generic-amd64-{{ hostname }}.qcow2 --upload /tmp/cloud.cfg:/etc/cloud/cloud.cfg
+        virt-customize -a /tmp/debian-12-generic-amd64-{{ hostname }}.qcow2 --truncate /etc/machine-id
+
+    - name: Add disk image to VM
+      shell: |
+        qm importdisk {{ vm.vmid }} /tmp/debian-12-generic-amd64-{{ hostname }}.qcow2 local-zfs
+        qm set {{ vm.vmid }} --scsihw virtio-scsi-pci --scsi0 local-zfs:vm-{{ vm.vmid }}-disk-0
+        qm set {{ vm.vmid }} --boot c --bootdisk scsi0
+        qm resize {{ vm.vmid }} scsi0 32G
+
+    - name: Start VM
+      community.general.proxmox_kvm:
+        api_host: '{{ ansible_host }}'
+        api_user: automation@pve
+        api_token_id: automation
+        api_token_secret: "{{ lookup('ansible.builtin.env', 'PROXMOX_TOKEN_SECRET') }}"
+        name: '{{ hostname }}'
+        node: '{{ inventory_hostname }}'
+        state: started

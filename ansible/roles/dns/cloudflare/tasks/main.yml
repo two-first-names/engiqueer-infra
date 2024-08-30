@@ -1,0 +1,7 @@
+- community.general.cloudflare_dns:
+    zone: "{{ zone }}"
+    record: "{{ record }}"
+    type: "{{ type }}"
+    value: "{{ value }}"
+    proxied: "{{ proxied }}"
+    api_token: "{{ lookup('ansible.builtin.env', 'CLOUDFLARE_TOKEN') }}"

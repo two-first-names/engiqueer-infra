@@ -1,2 +1,4 @@
 architecture: amd64
 step_cli_version: 0.27.2
+step_ca_host: ca.engiqueer.net
+step_ca_fingerprint: 401724fcc48132b71f50abad310a0cee30ae6ef1071089d0bcb2827d34fb6b19

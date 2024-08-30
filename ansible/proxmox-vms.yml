@@ -1,0 +1,7 @@
+---
+- hosts: pve-0
+  roles:
+    - step
+    - role: proxmox/vm
+      hostname: bastion.engiqueer.net
+      vlan: 6 # Public

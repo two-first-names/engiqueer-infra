@@ -1,0 +1,5 @@
+zone: engiqueer.net
+record: "{{ inventory_hostname }}"
+type: AAAA
+value: "{{ ipv6_address }}"
+proxied: false
