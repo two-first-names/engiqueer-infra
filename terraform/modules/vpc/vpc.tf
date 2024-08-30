@@ -8,7 +8,7 @@ resource "aws_vpc" "vpc" {
 }
 
 resource "aws_subnet" "subnet" {
-  count  = length(data.aws_availability_zones.available)
+  count  = length(data.aws_availability_zones.available.names)
   vpc_id = aws_vpc.vpc.id
 
   availability_zone               = data.aws_availability_zones.available.names[count.index]
