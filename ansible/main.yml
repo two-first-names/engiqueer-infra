@@ -1,0 +1,7 @@
+- hosts: ca.engiqueer.net
+  become: yes
+  roles:
+    - role: step
+      architecture: arm64
+    - role: step-ca
+      architecture: arm64

@@ -1,0 +1,80 @@
+- name: Check if step binary exists
+  stat:
+    path: "/tmp/step-ca_linux_{{ step_ca_version }}_{{ architecture }}.tar.gz"
+  register: result
+
+- name: Download step binary
+  get_url:
+    url: "https://github.com/smallstep/certificates/releases/download/v{{ step_ca_version }}/step-ca_linux_{{ step_ca_version }}_{{ architecture }}.tar.gz"
+    dest: "/tmp/step-ca_linux_{{ step_ca_version }}_{{ architecture }}.tar.gz"
+    mode: '0755'
+    timeout: 30
+  when: not result.stat.exists
+
+- name: Unarchive step binary
+  unarchive:
+    remote_src: yes
+    src: /tmp/step-ca_linux_{{ step_ca_version }}_{{ architecture }}.tar.gz
+    dest: /tmp
+
+- name: Link binaries to correct version
+  copy:
+    src: "/tmp/step-ca"
+    remote_src: yes
+    dest: "{{ step_ca_executable }}"
+    mode: a+x
+
+- name: step_ca_user is present
+  ansible.builtin.user:
+    name: "{{ step_ca_user }}"
+    password: "*"
+    home: "{{ step_ca_path }}"
+    shell: /usr/sbin/nologin
+    system: yes
+  no_log: true
+
+- name: Create a ext4 filesystem on /dev/nvme1n1
+  community.general.filesystem:
+    fstype: ext4
+    dev: /dev/nvme1n1
+
+- name: Mount /etc/step-ca
+  ansible.posix.mount:
+    path: "{{ step_ca_path }}"
+    src: /dev/nvme1n1
+    fstype: ext4
+    state: mounted
+
+- name: Paths are present
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ step_ca_user }}"
+    group: "{{ step_ca_user }}"
+    mode: 0700
+  loop:
+    - "{{ step_ca_path }}"
+    - "{{ step_ca_path }}/db"
+
+- name: .step symlink is present
+  ansible.builtin.file:
+    src: "{{ step_ca_path }}"
+    dest: "{{ step_ca_path }}/.step"
+    state: link
+    owner: "{{ step_ca_user }}"
+    group: "{{ step_ca_user }}"
+    mode: 0700
+
+- name: Systemd unit file is present
+  template:
+    src: step-ca.service.j2
+    dest: /etc/systemd/system/step-ca.service
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Service is enabled and running
+  systemd:
+    name: step-ca.service
+    state: started
+    enabled: yes

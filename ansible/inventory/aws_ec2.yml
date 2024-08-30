@@ -1,0 +1,8 @@
+plugin: amazon.aws.aws_ec2
+regions:
+  - us-east-1
+hostnames:
+  - tag:Name
+compose:
+  ansible_host: ipv6_address
+  ansible_user: tags.ansible_user
