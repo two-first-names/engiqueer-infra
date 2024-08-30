@@ -1,3 +1,0 @@
-pve-0 ansible_user=root ipv6_address=2a01:4b00:d203:8d00::2
-nas.engiqueer.net ipv6_address=2a01:4b00:d203:8d00::3
-backups.engiqueer.net ipv6_address=2a01:4b00:d203:8d00::4

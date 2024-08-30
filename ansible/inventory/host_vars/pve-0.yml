@@ -1,0 +1,5 @@
+ansible_host: pve.engiqueer.net
+ansible_user: root
+ip_addresses:
+  - "2a01:4b00:d203:8d00::2"
+ipv6_address: "2a01:4b00:d203:8d00::2"

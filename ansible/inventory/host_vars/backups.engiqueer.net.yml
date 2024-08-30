@@ -1,0 +1,4 @@
+ansible_user: admin
+ipv6_address: "2a01:4b00:d203:8d00::4"
+ip_addresses:
+- "2a01:4b00:d203:8d00::4"
