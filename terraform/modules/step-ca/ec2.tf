@@ -13,7 +13,7 @@ resource "aws_ebs_volume" "step-ca" {
 }
 
 resource "aws_volume_attachment" "step-ca" {
-  device_name = "/dev/sdb"
+  device_name = "/dev/sdf"
   instance_id = module.ec2.instance_id
   volume_id   = aws_ebs_volume.step-ca.id
 }
