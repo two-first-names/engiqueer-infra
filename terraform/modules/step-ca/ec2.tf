@@ -4,3 +4,16 @@ module "ec2" {
   name          = "step-ca"
   subnet_id     = var.subnet_id
 }
+
+resource "aws_ebs_volume" "step-ca" {
+  availability_zone = var.availability_zone
+  size              = 8
+  type              = "gp3"
+  encrypted         = true
+}
+
+resource "aws_volume_attachment" "step-ca" {
+  device_name = "/dev/sdb"
+  instance_id = module.ec2.instance_id
+  volume_id   = aws_ebs_volume.step-ca.id
+}

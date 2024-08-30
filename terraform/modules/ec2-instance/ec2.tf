@@ -19,6 +19,8 @@ resource "aws_instance" "this" {
   instance_type = var.instance_type
   subnet_id     = var.subnet_id
 
+  user_data = templatefile("${path.module}/user-data.sh", {})
+
   tags = {
     Name = var.name
   }
