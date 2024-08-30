@@ -26,6 +26,7 @@
     serial: serial0='socket'
     vga: serial0
     cipassword: "{{ lookup('ansible.builtin.password', '/dev/null', chars=['ascii_lowercase', 'digits'], length=8) }}"
+    ciuser: debian
   register: vm
 
 - name: Bootstrap VM

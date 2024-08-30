@@ -1,0 +1,1 @@
+ansible-inventory -i inventory --list | jq '._meta.hostvars | to_entries[] | "\(.value.ipv6_address | .__ansible_unsafe? // .) \(.key)"' -r

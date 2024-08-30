@@ -1,0 +1,12 @@
+plugin: community.general.proxmox
+user: automation@pve
+token_id: automation
+url: https://proxmox.engiqueer.net
+want_facts: true
+groups:
+  linux: proxmox_tags_parsed is defined and 'linux' in proxmox_tags_parsed
+  debian: proxmox_tags_parsed is defined and 'debian' in proxmox_tags_parsed
+compose:
+  ansible_user: proxmox_ciuser
+  ip_addresses: proxmox_agent_interfaces | selectattr('name', 'match', 'eth|ens') | map(attribute='ip-addresses') | flatten | ansible.utils.ipaddr('address')
+  ipv6_address: proxmox_agent_interfaces | selectattr('name', 'match', 'eth|ens') | map(attribute='ip-addresses') | flatten | ansible.utils.ipaddr('address') | ansible.utils.ipaddr('2000::/3') | last
