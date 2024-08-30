@@ -1,7 +1,7 @@
 module "ec2" {
   source        = "../ec2-instance"
   instance_type = "t4g.nano"
-  name          = "step-ca"
+  name          = "ca.engiqueer.net"
   subnet_id     = var.subnet_id
 }
 
@@ -13,7 +13,7 @@ resource "aws_ebs_volume" "step-ca" {
 }
 
 resource "aws_volume_attachment" "step-ca" {
-  device_name = "/dev/sdf"
+  device_name = "/dev/sdfy"
   instance_id = module.ec2.instance_id
   volume_id   = aws_ebs_volume.step-ca.id
 }
