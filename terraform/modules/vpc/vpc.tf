@@ -8,7 +8,7 @@ resource "aws_vpc" "vpc" {
 }
 
 resource "aws_subnet" "subnet" {
-  count  = data.aws_availability_zones.available.count
+  count  = length(data.aws_availability_zones.available)
   vpc_id = aws_vpc.vpc.id
 
   availability_zone               = data.aws_availability_zones.available.names[count.index]
@@ -38,7 +38,7 @@ resource "aws_route_table" "route_table" {
 }
 
 resource "aws_route_table_association" "route_table_association" {
-  count          = aws_subnet.subnet.count
+  count          = length(aws_subnet.subnet)
   route_table_id = aws_route_table.route_table.id
   subnet_id      = aws_subnet.subnet[count.index].id
 }
