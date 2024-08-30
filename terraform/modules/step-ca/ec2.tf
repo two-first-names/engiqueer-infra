@@ -3,6 +3,7 @@ module "ec2" {
   instance_type = "t4g.nano"
   name          = "ca.engiqueer.net"
   subnet_id     = var.subnet_id
+  security_group_ids = [aws_security_group.step-ca.id]
 }
 
 resource "aws_ebs_volume" "step-ca" {
